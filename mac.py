@@ -178,152 +178,150 @@ brightness = ttk.Scale (RHS, from_=0,to=100,orient='horizontal',
 brightness.place(x=90,y=190)
 ############################################################
 
+
+
 def weather():
-    app1=Toplevel()
+    app1 = Toplevel()
     app1.geometry('850x500+300+170')
     app1.title('Weather')
     app1.configure(bg='#f4f5f5')
-    app1.resizable(False,False)
+    app1.resizable(False, False)
 
-    #icon
-    image_icon=PhotoImage(file='Image/App1.png')
-    app1.iconphoto(False,image_icon)
-
-    
+    # Icon
+    image_icon = PhotoImage(file='Image/App1.png')
+    app1.iconphoto(False, image_icon)
 
     def getWeather():
         try:
-            city=textfield.get()
+            city = textfield.get()
+            if not city.strip():
+                raise ValueError("City name cannot be empty.")
 
-            geolocator= Nominatim(user_agent="geoapiExercises")
-            location=geolocator.geocode(city)
-            obj= TimezoneFinder()
-            result = obj.timezone_at(lng=location.longitude,lat=location.latitude)
+            # Geolocation and Timezone
+            geolocator = Nominatim(user_agent="geoapiExercises",timeout=10)
+            location = geolocator.geocode(city)
+            if not location:
+                raise ValueError("Invalid city name.")
 
-            
+            obj = TimezoneFinder()
+            result = obj.timezone_at(lng=location.longitude, lat=location.latitude)
 
-            
-            home=pytz.timezone(result)
-            local_time=datetime.now(home)
-            current_time=local_time.strftime("%I:%M %p")
+            home = pytz.timezone(result)
+            local_time = datetime.now(home)
+            current_time = local_time.strftime("%I:%M %p")
             clock.config(text=current_time)
-            name.config(text="CURRENT WEATHER") 
+            name.config(text="CURRENT WEATHER")
 
+            # Weather Data
+            api_key = "b5856283429438a063b2289208db2e66"  # Replace with your API key
+            api_url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}"
+            response = requests.get(api_url)
+            json_data = response.json()
 
-            #weather
+            if json_data.get("cod") != 200:
+                raise ValueError("City not found in weather database.")
 
-            api="https://api.openweathermap.org/data/2.5/weather?q="+city+"&appid=b5856283429438a063b2289208db2e66"
-            json_data = requests.get(api).json()
             condition = json_data['weather'][0]['main']
             description = json_data['weather'][0]['description']
-            temp = int(json_data['main']['temp']-273.15)
+            temp = int(json_data['main']['temp'] - 273.15)
             pressure = json_data['main']['pressure']
-            humidity=json_data['main']['humidity']
+            humidity = json_data['main']['humidity']
             wind = json_data['wind']['speed']
 
-            t.config(text=(temp,"°"))
-            c.config(text=(condition,"|","FEELS","LIKE",temp,"°"))
-
-            
-            w.config(text=wind)
-            h.config(text=humidity)
-            d.config(text=description)
-            p.config(text=pressure)
+            # Update Labels
+            t.config(text=f"{temp}°")
+            c.config(text=f"{condition} | FEELS LIKE {temp}°")
+            w.config(text=f"{wind} m/s")
+            h.config(text=f"{humidity}%")
+            d.config(text=description.capitalize())
+            p.config(text=f"{pressure} hPa")
 
         except Exception as e:
-            messagebox.showerror("Weather App","Invalid Entry!")
+            messagebox.showerror("Weather App", f"Error: {str(e)}")
 
+    # Search Box
+    Search_image = PhotoImage(file="Image/search.png")
+    myimage = Label(app1, image=Search_image, bg="#f4f5f5")
+    myimage.place(x=20, y=20)
 
-    
-
-
-
-
-
-
-    #search box
-    Search_image=PhotoImage(file="Image/search.png")
-    myimage=Label(app1,image=Search_image,bg="#f4f5f5")
-    myimage.place(x=20,y=20)
-
-    
-    textfield= tk.Entry(app1,justify='center',width=17,font=('poppins',25,'bold'),bg='#404040',border=0,fg="white")
-    textfield.place(x=50,y=40)
+    textfield = Entry(app1, justify='center', width=17, font=('poppins', 25, 'bold'), bg='#404040', border=0, fg="white")
+    textfield.place(x=50, y=40)
     textfield.focus()
 
+    Search_icon = PhotoImage(file="Image/search_icon.png")
+    myimage_icon = Button(app1, image=Search_icon, borderwidth=0, cursor="hand2", bg="#404040", command=getWeather)
+    myimage_icon.place(x=400, y=34)
 
-    Search_icon=PhotoImage(file="Image/search_icon.png")
-    myimage_icon=Button(app1,image=Search_icon, borderwidth=0, cursor="hand2", bg="#404040",command=getWeather)
-    myimage_icon.place( x = 400,y = 34 )
+    # Logo
+    Logo_image = PhotoImage(file="Image/logo.png")
+    logo = Label(app1, image=Logo_image, bg="#f4f5f5")
+    logo.place(x=150, y=100)
 
-    #logo
+    # Bottom Box
+    Frame_image = PhotoImage(file="Image/box.png")
+    frame_myimage = Label(app1, image=Frame_image, bg="#f4f5f5")
+    frame_myimage.pack(padx=5, pady=5, side=BOTTOM)
 
-    Logo_image=PhotoImage(file="Image/logo.png")
-    logo=Label(app1,image=Logo_image,bg="#f4f5f5")
-    logo.place( x = 150 , y = 100 )
+    # Time and Name
+    name = Label(app1, font=('arial', 15, 'bold'), bg="#f4f5f5")
+    name.place(x=30, y=100)
+    clock = Label(app1, font=('Helvetica', 20), bg="#f4f5f5")
+    clock.place(x=30, y=130)
 
-    #bottom box
-    Frame_image=PhotoImage(file="Image/box.png")
-    frame_myimage=Label(app1, image=Frame_image,bg="#f4f5f5")
-    frame_myimage.pack(padx=5,pady=5,side=BOTTOM)
+    # Labels for Weather Details
+    label1 = Label(app1, text="WIND", font=("Helvetica", 15, 'bold'), fg="white", bg="#1ab5ef")
+    label1.place(x=120, y=400)
+    label2 = Label(app1, text="HUMIDITY", font=("Helvetica", 15, 'bold'), fg="white", bg="#1ab5ef")
+    label2.place(x=250, y=400)
+    label3 = Label(app1, text="DESCRIPTION", font=("Helvetica", 15, 'bold'), fg="white", bg="#1ab5ef")
+    label3.place(x=430, y=400)
+    label4 = Label(app1, text="PRESSURE", font=("Helvetica", 15, 'bold'), fg="white", bg="#1ab5ef")
+    label4.place(x=650, y=400)
 
-    #time
-    name=Label(app1,font=('arial',15,'bold'),bg="#f4f5f5")
-    name.place(x=30,y=100)
-    clock=Label(app1,font=('Helvetica',20),bg="#f4f5f5")
-    clock.place(x=30,y=130)
+    # Weather Details
+    t = Label(app1, font=('arial', 70, 'bold'), fg="#ee666d", bg='#f4f5f5')
+    t.place(x=400, y=150)
+    c = Label(app1, font=('arial', 15, 'bold'), bg='#f4f5f5')
+    c.place(x=400, y=250)
 
-
-    #label
-    label1=Label(app1,text="WIND",font=("Helvatica",15,'bold'),fg="white",bg="#1ab5ef")
-    label1.place(x=120,y=400)
-    label2=Label(app1,text="HUMIDITY",font=("Helvatica",15,'bold'),fg="white",bg="#1ab5ef")
-    label2.place(x=250,y=400)
-    label3=Label(app1,text="DESCRIPTION",font=("Helvatica",15,'bold'),fg="white",bg="#1ab5ef")
-    label3.place(x=430,y=400)
-    label4=Label(app1,text="PRESSURE",font=("Helvatica",15,'bold'),fg="white",bg="#1ab5ef")
-    label4.place(x=650,y=400)
-
-    t=Label(app1,font=('arial',70,'bold'),fg="#ee666d",bg='#f4f5f5')
-    t.place(x=400,y=150)
-    c=Label(app1,font=('arial',15,'bold'),bg='#f4f5f5')
-    c.place(x=400,y=250)
-
-    w=Label(app1,text="...",font=('arial',20,'bold'),bg="#1ab5ef")
-    w.place(x=120,y=430)
-    h=Label(app1,text="...",font=('arial',20,'bold'),bg="#1ab5ef")
-    h.place(x=280,y=430)
-    d=Label(app1,text="...",font=('arial',20,'bold'),bg="#1ab5ef")
-    d.place(x=450,y=430)
-    p=Label(app1,text="...",font=('arial',20,'bold'),bg="#1ab5ef")
-    p.place(x=670,y=430)
-
+    w = Label(app1, text="...", font=('arial', 20, 'bold'), bg="#1ab5ef")
+    w.place(x=120, y=430)
+    h = Label(app1, text="...", font=('arial', 20, 'bold'), bg="#1ab5ef")
+    h.place(x=280, y=430)
+    d = Label(app1, text="...", font=('arial', 20, 'bold'), bg="#1ab5ef")
+    d.place(x=450, y=430)
+    p = Label(app1, text="...", font=('arial', 20, 'bold'), bg="#1ab5ef")
+    p.place(x=670, y=430)
 
     app1.mainloop()
 
+
+
+
 def clock():
-    app2=Toplevel()
+    app2 = Toplevel()
     app2.geometry("850x110+300+10")
     app2.title('Clock')
     app2.configure(bg="#292e2e")
-    app2.resizable(False,False)
+    app2.resizable(False, False)
 
+    # Set icon
+    image_icon = PhotoImage(file="Image/App2.png")
+    app2.iconphoto(False, image_icon)
 
-    #icon
+    # Function to update time
+    def update_time():
+        current_time = strftime('%H:%M:%S %p')
+        lbl.config(text=current_time)
+        lbl.after(1000, update_time)
 
-    image_icon=PhotoImage(file="Image/App2.png")
-    app2.iconphoto(False,image_icon) 
+    lbl = Label(app2, font=('digital-7', 50, 'bold'), width=20, bg="#f4f5f5", fg="#292e2e")
+    lbl.pack(anchor='center', pady=20)
 
-    def clock():
-        text=strftime('%H:%M:%S %p')
-        lbl.config(text=text)
-        lbl.after(1000,clock)
-
-    lb1=Label(app2,font=('digital-7',50,'bold'),width=20,bg="#f4f5f5",fg="#292e2e")
-    lb1.pack(anchor='center',pady=20)
-    clock()
+    update_time()
 
     app2.mainloop()
+
 
 def calender():
     app3=Toplevel()
@@ -504,17 +502,5 @@ app9.place(x=270,y=120)
 app10_image=PhotoImage(file='Image/App10.png')
 app10=Button(RHB,image=app10_image,bd=0,command=close_window)
 app10.place(x=355,y=120)
-
-
-
-
-
-
-
-
-
-
-
-
 
 root.mainloop()
